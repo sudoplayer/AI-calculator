@@ -1,0 +1,30 @@
+[project]
+name = "ai-calculator"
+version = "0.1.0"
+description = "Multi-agent AI calculator MVP built with Deep Agents"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "deepagents>=0.1",
+    "langchain>=0.3",
+    "langgraph>=0.3",
+    "langchain-core>=0.3",
+    "langchain-openai>=0.3",
+    "httpx[socks]>=0.27",
+    "python-dotenv>=1.0",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
