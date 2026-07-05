@@ -1,154 +1,157 @@
-[中文](./README.md) | [English](./README_EN.md)
+English | [中文](./README_CN.md)
 
 # 🧮 AI Calculator
 
 *Master-agent + Sub-agents MVP — powered by LangChain ecosystem's [deepagents](https://github.com/langchain-ai/deepagents)*
 
+
+
 ---
 
-> **本项目是为普适场景迁移扩展提供的参考实现**，以 **AI 计算器** 为演示载体，展示 deepagents 的核心编排模式。你可以将它作为脚手架，复用到任意多智能体协作场景——代码审查助手、数据分析管线、文档生成工作流等。
+> **This project is a reference implementation designed for migrating and extending to general-purpose scenarios.** The AI Calculator serves as the demonstration vehicle, showcasing deepagents' core orchestration patterns. Use it as a scaffold for any multi-agent collaboration scenario — code review assistants, data analysis pipelines, document generation workflows, and beyond.
 
-## 🎬 演示
+## 🎬 Demo
 
-![AI Calculator 演示](assets/ai-calculator.gif)
+![AI Calculator Demo](assets/ai-calculator.gif)
 
-## ✨ 核心特性
-
-
-| 特性                 | 说明                                         |
-| ------------------ | ------------------------------------------ |
-| 🧠 **主-子架构**       | 一个 Orchestrator 集中决策，按需调度专业 Sub-agent 协作完成 |
-| 👤 **人在回路 (HITL)** | 每步关键计算结果需人工确认/驳回，确保安全可控                    |
-| 🧩 **Skill 机制**    | 每个子智能体以 `skills/` 文件夹独立组织，职责边界分明           |
-| 🔌 **即改即用**        | 替换 Skill 定义与工具函数即可适配新领域，架构零改动              |
+## ✨ Key Features
 
 
-## 🖥️ 快速体验
+| Feature                         | Description                                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 🧠 **Master–Sub Architecture**  | One Orchestrator makes centralized decisions, dispatching specialized Sub-agents on demand           |
+| 👤 **Human-in-the-Loop (HITL)** | Every critical calculation step requires human approval or rejection for safe, accountable operation |
+| 🧩 **Skill Mechanism**          | Each sub-agent is organized as an independent `skills/` folder with clear responsibility boundaries  |
+| 🔌 **Swap & Go**                | Replace skill definitions and tool functions to adapt to new domains — zero architecture changes     |
+
+
+## 🖥️ Quick Start
 
 ```bash
-# 1️⃣ 安装依赖
+# 1️⃣ Install dependencies
 uv sync
 
-# 2️⃣ 配置 DeepSeek 凭证
+# 2️⃣ Configure DeepSeek credentials
 cp config/.env.example config/.env
-# 编辑 config/.env，填入 DEEPSEEK_API_KEY
+# Edit config/.env — fill in your DEEPSEEK_API_KEY
 
-# 3️⃣ 启动交互终端
+# 3️⃣ Launch the interactive terminal
 uv run python main.py
 ```
 
-输入表达式 `(3 + 5) * 2`，观察 Orchestrator 如何拆解任务、调度子智能体、请求你的确认——整个过程清晰可见。
+Type an expression like `(3 + 5) * 2`, then watch as the Orchestrator decomposes the task, dispatches sub-agents, and requests your confirmation — every step visible in real time.
 
-## 🏗️ 架构总览
+## 🏗️ Architecture Overview
 
 ```
-        用户输入: "(3+5)*2"
-              │
-              ▼
-   ┌─────────────────────────────────────────────┐
-   │                Orchestrator                 │
-   │         (解析表达式、处理优先级、编排执行顺序)    │
-   └──────┬──────────────┬──────────────┬───────┘
-          │              │              │
-          ▼              ▼              ▼
-     ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
-     │   加法    │   │   减法   │   │   乘法    │   │   除法    │
-     │  Agent   │   │  Agent   │   │  Agent   │   │  Agent   │
-     └────┬─────┘   └────┬─────┘   └────┬─────┘   └────┬─────┘
-          │              │              │              │
-          ▼              ▼              ▼              ▼
-     ┌──────────────────────────────────────────────────┐
-     │              Tool 纯函数计算                       │
-     │          → interrupt() 请求用户确认                │
-     └──────────────────────────────────────────────────┘
-          │              │              │              │
-          ▼              ▼              ▼              ▼
-               ✅ 确认 / ❌ 驳回并说明原因
-          │              │              │              │
-          └──────────────┴──────────────┴──────────────┘
-                    │
-                    ▼
-          Orchestrator 代入结果，继续下一步
-                    │
-                    ▼
-              最终输出: 16
+User Input: "(3+5)*2"
+    │
+    ▼
+┌─────────────────────────────────────────────┐
+│              Orchestrator                   │
+│  (Parse expression, enforce precedence,     │
+│   orchestrate execution order)              │
+└────┬──────┬──────┬──────┬───────────────────┘
+     │      │      │      │
+     ▼      ▼      ▼      ▼
+  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
+  │   Add    │  │   Sub    │  │   Mul    │  │   Div    │
+  │  Agent   │  │  Agent   │  │  Agent   │  │  Agent   │
+  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘
+     │       │       │       │
+     ▼       ▼       ▼       ▼
+  ┌──────────────────────────────┐
+  │   Tool: Pure Arithmetic      │
+  │   → interrupt() for approval │
+  └──────────────────────────────┘
+     │       │       │       │
+     ▼       ▼       ▼       ▼
+  ✅ Approve / ❌ Reject + Reason
+     │       │       │       │
+     └───────┴───────┴───────┘
+            │
+            ▼
+  Orchestrator substitutes result, continues
+            │
+            ▼
+      Final Output: 16
 ```
 
-### 核心流程
+### Execution Flow
 
-1. **Orchestrator** 接收用户表达式，按运算符优先级分解为子任务
-2. **Sub-agent** 被调度执行单一二元运算（加/减/乘/除）
-3. **Tool 函数** 执行纯算术逻辑后调用 `interrupt()` 暂停流程
-4. **用户确认/驳回**：确认则结果回填；驳回可附原因，Sub-agent 据此调整
-5. **Orchestrator** 将已确认结果代入表达式推进，直至得出最终答案
+1. **Orchestrator** receives the user expression and decomposes it into sub-tasks based on operator precedence
+2. **Sub-agent** is dispatched to perform a single binary operation (add/subtract/multiply/divide)
+3. **Tool function** executes pure arithmetic logic, then calls `interrupt()` to pause the flow
+4. **User confirms or rejects**: approval fills back the result; rejection may include a reason for the sub-agent to adjust
+5. **Orchestrator** substitutes the approved result back into the expression and continues until the final answer is reached
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 .
-├── main.py                       # TUI 入口 (Rich 控制台界面)
+├── main.py                       # TUI entry point (Rich console UI)
 ├── agents/
-│   └── builder.py                # 构建 Orchestrator + 4 个 Sub-agent
+│   └── builder.py                # Constructs Orchestrator + 4 Sub-agents
 ├── skills/
-│   ├── orchestration/SKILL.md    # Orchestrator 工作流指令
-│   ├── add/SKILL.md              # 加法技能定义
-│   ├── subtract/SKILL.md         # 减法技能定义
-│   ├── multiply/SKILL.md         # 乘法技能定义
-│   ├── divide/SKILL.md           # 除法技能定义
+│   ├── orchestration/SKILL.md    # Orchestrator workflow instructions
+│   ├── add/SKILL.md              # Addition skill definition
+│   ├── subtract/SKILL.md         # Subtraction skill definition
+│   ├── multiply/SKILL.md         # Multiplication skill definition
+│   ├── divide/SKILL.md           # Division skill definition
 │   └── */scripts/
-│       ├── tool.py               # LangChain @tool 函数 (含 interrupt)
-│       └── *.py                  # 纯算术函数
+│       ├── tool.py               # LangChain @tool functions (incl. interrupt)
+│       └── *.py                  # Pure arithmetic functions
 ├── utils/
-│   ├── runner.py                 # run_until_complete 循环
-│   ├── hitl.py                   # HITL 类型定义与决策解析
-│   └── llm_client.py             # DeepSeek LLM 客户端
+│   ├── runner.py                 # run_until_complete loop
+│   ├── hitl.py                   # HITL type definitions & decision parsing
+│   └── llm_client.py             # DeepSeek LLM client
 ├── tests/
-│   ├── test_arithmetic.py        # 算术函数单元测试
-│   ├── test_hitl.py              # HITL 解析单元测试
-│   └── test_integration.py       # 端到端集成测试
+│   ├── test_arithmetic.py        # Arithmetic unit tests
+│   ├── test_hitl.py              # HITL parsing unit tests
+│   └── test_integration.py       # End-to-end integration tests
 ├── config/
-│   ├── .env.example              # 环境变量模板
-│   └── .env                      # 你的 API 凭证（不提交）
+│   ├── .env.example              # Environment variable template
+│   └── .env                      # Your API credentials (not committed)
 ├── assets/
-│   └── ai-calculator.gif         # 录屏演示
+│   └── ai-calculator.gif         # Screen recording demo
 ├── pyproject.toml
 ├── README.md
-└── README_EN.md
+└── README_CN.md
 ```
 
-## 🛠️ 技术栈
+## 🛠️ Tech Stack
 
 
-| 类别      | 技术                                                                            |
-| ------- | ----------------------------------------------------------------------------- |
-| 核心框架    | [deepagents](https://github.com/langchain-ai/deepagents) (LangChain)          |
-| 状态图     | [LangGraph](https://langchain-ai.github.io/langgraph/)                        |
-| LLM 客户端 | [langchain-openai](https://pypi.org/project/langchain-openai/) → DeepSeek API |
-| 终端界面    | [Rich](https://rich.readthedocs.io/)                                          |
-| 包管理     | [uv](https://github.com/astral-sh/uv)                                         |
-| 测试      | pytest                                                                        |
+| Category        | Technology                                                                    |
+| --------------- | ----------------------------------------------------------------------------- |
+| Core Framework  | [deepagents](https://github.com/langchain-ai/deepagents) (LangChain)          |
+| State Graph     | [LangGraph](https://langchain-ai.github.io/langgraph/)                        |
+| LLM Client      | [langchain-openai](https://pypi.org/project/langchain-openai/) → DeepSeek API |
+| Terminal UI     | [Rich](https://rich.readthedocs.io/)                                          |
+| Package Manager | [uv](https://github.com/astral-sh/uv)                                         |
+| Testing         | pytest                                                                        |
 
 
-## 🧪 测试
+## 🧪 Testing
 
 ```bash
-# 离线单元测试（无需网络/LLM）
+# Offline unit tests (no network / LLM required)
 uv run pytest tests/test_arithmetic.py tests/test_hitl.py -v
 
-# 全部测试（含端到端，需网络 + API Key）
+# All tests (including E2E, requires network + API key)
 uv run pytest tests/ -v
 ```
 
-## 🔄 迁移到新场景
+## 🔄 Migrating to a New Scenario
 
-以本项目为脚手架，将 AI 计算器转换为其他多智能体场景：
+Use this project as a scaffold to transform the AI Calculator into any multi-agent scenario:
 
-1. **定义技能**：在 `skills/` 下创建新 Skill 目录，参照现有 `SKILL.md` 编写指令
-2. **实现工具**：编写新的 `tool.py`，复用 `interrupt()` 实现人的确认
-3. **注册 Agent**：在 `builder.py` 中注册新 Sub-agent 并挂载工具
-4. **调整编排**：修改 Orchestrator 的 Skill 指令，告知它新能力
+1. **Define skills**: Create a new `skills/` directory modeled after an existing `SKILL.md`
+2. **Implement tools**: Write a new `tool.py`, reusing `interrupt()` for human confirmation
+3. **Register agents**: Register new sub-agents and mount their tools in `builder.py`
+4. **Adjust orchestration**: Modify the Orchestrator's skill instructions to inform it of new capabilities
 
-> 项目架构围绕"编排 + 确认回环"设计，替换的是**领域知识**和**工具函数**，复用的是**协作流程**和**HITL 模式**。
+> The architecture is designed around **orchestration + confirmation loops**. What you replace is **domain knowledge** and **tool functions**; what you reuse is the **collaboration flow** and **HITL pattern**.
 
 ## 📄 License
 
@@ -156,4 +159,4 @@ uv run pytest tests/ -v
 
 ---
 
-**AI Calculator** — deepagents 多智能体编排的 MVP 参考实现
+**AI Calculator** — A deepagents multi-agent orchestration MVP reference implementation
